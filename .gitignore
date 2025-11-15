@@ -1,0 +1,55 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+go.work
+
+# Binários compilados
+portainer-cli
+portainer-cli.exe
+
+# Arquivos de configuração local (não commitar credenciais)
+config.yaml
+config.yml
+
+# Logs
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Go modules cache (geralmente não precisa, mas se quiser)
+# vendor/
+
+# Arquivos de CI/CD
+.github/workflows/*.yml.tmp
+
+# Testes
+test-results/
+coverage.html
