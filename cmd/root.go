@@ -8,8 +8,8 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "portainer",
-	Short: "Portainer CLI for CI/CD automation",
+	Use:   "portainer-go",
+	Short: "Portainer Go CLI for CI/CD automation",
 	Long:  `A command-line interface for managing Portainer stacks and resources`,
 }
 
