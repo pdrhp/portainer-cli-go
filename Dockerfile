@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates && \
+RUN apk --no-cache add ca-certificates jq && \
     adduser -D -s /bin/sh portainer
 
 WORKDIR /home/portainer
