@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/pdrhp/portainer-go-cli/pkg/types"
 )
@@ -12,20 +12,14 @@ func (c *Client) ListStacks(ctx context.Context, filters *types.StackFilters) ([
 	path := "/api/stacks"
 
 	if filters != nil && (filters.EndpointID > 0 || filters.SwarmID != "") {
-		filterMap := make(map[string]interface{})
+		params := url.Values{}
 		if filters.EndpointID > 0 {
-			filterMap["EndpointId"] = filters.EndpointID
+			params.Add("EndpointID", fmt.Sprintf("%d", filters.EndpointID))
 		}
 		if filters.SwarmID != "" {
-			filterMap["SwarmId"] = filters.SwarmID
+			params.Add("SwarmID", filters.SwarmID)
 		}
-
-		filtersJSON, err := json.Marshal(filterMap)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal filters: %w", err)
-		}
-
-		path += "?filters=" + string(filtersJSON)
+		path += "?" + params.Encode()
 	}
 
 	var stacks []types.Stack
