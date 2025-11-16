@@ -25,11 +25,11 @@ RUN apk --no-cache add ca-certificates && \
 
 WORKDIR /home/portainer
 
-COPY --from=builder /build/portainer-go-cli .
+COPY --from=builder /build/portainer-go-cli /usr/local/bin/portainer-go
 
-RUN chown portainer:portainer portainer-go-cli
+RUN chown portainer:portainer /usr/local/bin/portainer-go && \
+    chmod +x /usr/local/bin/portainer-go
 
 USER portainer
 
-ENTRYPOINT ["./portainer-go-cli"]
-CMD ["--help"]
+CMD ["portainer-go", "--help"]
