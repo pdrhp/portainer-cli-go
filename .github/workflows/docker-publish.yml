@@ -9,15 +9,11 @@ env:
   IMAGE_NAME: pdrh/portainer-go-cli
 
 jobs:
-  release:
+  build-and-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
-    
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
     
     steps:
       - name: Checkout
@@ -48,38 +44,6 @@ jobs:
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          release_name: Release ${{ steps.version.outputs.tag }}
-          body: |
-            ## Changes in this Release
-            
-            ### Features
-            - Auto-generated release from main branch
-            
-            ### Docker Images
-            - `${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}`
-            - `${{ env.IMAGE_NAME }}:latest`
-            
-            ### Commits
-            ${{ github.event.head_commit.message }}
-            
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.tag }}...main
-          draft: false
-          prerelease: false
-
-  docker:
-    needs: release
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -95,7 +59,7 @@ jobs:
       - name: Generate Docker tags
         id: docker_tags
         run: |
-          VERSION="${{ needs.release.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           
           IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
           MAJOR="${VERSION_PARTS[0]}"
@@ -113,21 +77,47 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./app/Dockerfile
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=Portainer CLI
             org.opencontainers.image.description=CLI for managing Portainer stacks
-            org.opencontainers.image.version=${{ needs.release.outputs.version }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VERSION=${{ needs.release.outputs.version }}
+            VERSION=${{ steps.version.outputs.version }}
             COMMIT=${{ github.sha }}
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## Changes in this Release
+            
+            ### Docker Images Published
+            - `${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}`
+            - `${{ env.IMAGE_NAME }}:latest`
+            
+            ### Pull Command
+            ```bash
+            docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ```
+            
+            ### Latest Commit
+            ${{ github.event.head_commit.message }}
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: false
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
@@ -141,14 +131,14 @@ jobs:
         run: |
           echo "## 🚀 Release Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag:** ${{ needs.release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images Published:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Command:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
