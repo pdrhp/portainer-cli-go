@@ -12,7 +12,6 @@ func (c *Client) ListStacks(ctx context.Context, filters *types.StackFilters) ([
 	path := "/api/stacks"
 
 	if filters != nil && (filters.EndpointID > 0 || filters.SwarmID != "") {
-		// Criar map apenas com campos não-zero
 		filterMap := make(map[string]interface{})
 		if filters.EndpointID > 0 {
 			filterMap["EndpointId"] = filters.EndpointID
@@ -26,7 +25,6 @@ func (c *Client) ListStacks(ctx context.Context, filters *types.StackFilters) ([
 			return nil, fmt.Errorf("failed to marshal filters: %w", err)
 		}
 
-		// Não fazer URL encoding - Portainer pode aceitar JSON puro
 		path += "?filters=" + string(filtersJSON)
 	}
 
@@ -37,4 +35,16 @@ func (c *Client) ListStacks(ctx context.Context, filters *types.StackFilters) ([
 	}
 
 	return stacks, nil
+}
+
+func (c *Client) CreateSwarmStackFromGit(ctx context.Context, endpointID int, payload types.StackCreateSwarmGitPayload) (*types.Stack, error) {
+	path := fmt.Sprintf("/api/stacks/create/swarm/repository?endpointId=%d", endpointID)
+
+	var stack types.Stack
+	err := c.doRequest(ctx, "POST", path, payload, &stack)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create swarm stack from git: %w", err)
+	}
+
+	return &stack, nil
 }

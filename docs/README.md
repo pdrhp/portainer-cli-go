@@ -12,7 +12,7 @@ This directory contains comprehensive documentation for the Portainer CLI.
 
 - [auth](commands/auth.md) - Authentication with Portainer
 - [config](commands/config.md) - Configuration management
-- [stacks](commands/stacks.md) - Stack operations
+- [stacks](commands/stacks.md) - Stack operations (list and create from Git)
 
 ## Contributing to Documentation
 

@@ -100,3 +100,32 @@ func (s Stack) StatusString() string {
 		return "unknown"
 	}
 }
+
+type Pair struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type AutoUpdateSettings struct {
+	Interval       string `json:"interval,omitempty"`
+	Webhook        string `json:"webhook,omitempty"`
+	ForcePullImage bool   `json:"forcePullImage,omitempty"`
+	ForceUpdate    bool   `json:"forceUpdate,omitempty"`
+	JobID          string `json:"jobID,omitempty"`
+}
+
+type StackCreateSwarmGitPayload struct {
+	Name                     string              `json:"name"`
+	RepositoryURL            string              `json:"repositoryURL"`
+	SwarmID                  string              `json:"swarmID"`
+	ComposeFile              string              `json:"composeFile,omitempty"`
+	RepositoryReferenceName  string              `json:"repositoryReferenceName,omitempty"`
+	RepositoryAuthentication bool                `json:"repositoryAuthentication,omitempty"`
+	RepositoryUsername       string              `json:"repositoryUsername,omitempty"`
+	RepositoryPassword       string              `json:"repositoryPassword,omitempty"`
+	Env                      []Pair              `json:"env,omitempty"`
+	AdditionalFiles          []string            `json:"additionalFiles,omitempty"`
+	AutoUpdate               *AutoUpdateSettings `json:"autoUpdate,omitempty"`
+	TLSSkipVerify            bool                `json:"tlsskipVerify,omitempty"`
+	FromAppTemplate          bool                `json:"fromAppTemplate,omitempty"`
+}

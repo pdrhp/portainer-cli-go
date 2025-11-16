@@ -79,6 +79,7 @@ cd app && go build -o portainer-go .
 - `auth` - Authenticate with Portainer server
 - `config` - Manage CLI configuration
 - `stacks list` - List stacks with optional filters
+- `stacks create-swarm-git` - Create a Swarm stack from a Git repository
 
 ## Examples for CI/CD
 
@@ -93,6 +94,25 @@ STACKS_JSON=$(./portainer-go stacks list --output json)
 ./portainer-go stacks list --output json | jq '. | length'
 ```
 
-## License
+### Create Swarm Stack from Git
 
-[Your License Here]
+```bash
+# Interactive creation (wizard)
+./portainer-go stacks create-swarm-git
+
+# Create with flags
+./portainer-go stacks create-swarm-git \
+  --name my-stack \
+  --repository-url https://github.com/user/repo \
+  --swarm-id jpofkc0i9uo9wtx1zesuk649w \
+  --endpoint-id 1
+
+# Create with auto-update (GitOps)
+./portainer-go stacks create-swarm-git \
+  --name my-stack \
+  --repository-url https://github.com/user/repo \
+  --swarm-id jpofkc0i9uo9wtx1zesuk649w \
+  --endpoint-id 1 \
+  --auto-update-interval 1h \
+  --auto-update-webhook my-webhook-id
+```

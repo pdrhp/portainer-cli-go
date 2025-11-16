@@ -68,14 +68,14 @@ Examples:
 			if errors.As(err, &httpErr) {
 				switch httpErr.StatusCode {
 				case 401, 403:
-					return fmt.Errorf("❌ Authentication failed. Please run 'portainer auth' again")
+					return fmt.Errorf("Authentication failed. Please run 'portainer auth' again")
 				case 404:
-					return fmt.Errorf("❌ Endpoint not found")
+					return fmt.Errorf("Endpoint not found")
 				default:
-					return fmt.Errorf("❌ Failed to list stacks (HTTP %d): %s", httpErr.StatusCode, httpErr.Message)
+					return fmt.Errorf("Failed to list stacks (HTTP %d): %s", httpErr.StatusCode, httpErr.Message)
 				}
 			}
-			return fmt.Errorf("❌ Failed to list stacks: %w", err)
+			return fmt.Errorf("Failed to list stacks: %w", err)
 		}
 
 		if len(stacks) == 0 {
