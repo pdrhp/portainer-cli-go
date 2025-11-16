@@ -61,17 +61,24 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
-          IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
-          MAJOR="${VERSION_PARTS[0]}"
-          MINOR="${VERSION_PARTS[1]}"
-          
+          # Only create exact version tag and latest
           TAGS="${{ env.IMAGE_NAME }}:${VERSION}"
-          TAGS="${TAGS},${{ env.IMAGE_NAME }}:${MAJOR}.${MINOR}"
-          TAGS="${TAGS},${{ env.IMAGE_NAME }}:${MAJOR}"
           TAGS="${TAGS},${{ env.IMAGE_NAME }}:latest"
           
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-          echo "Generated tags: ${TAGS}"
+          echo "Generated Docker tags: ${TAGS}"
+
+      - name: Create and push Git tag
+        run: |
+          # This step is CRITICAL: it creates the Git tag so the next workflow run
+          # will pick up this version and increment from it
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin ${{ steps.version.outputs.tag }}
+          
+          echo "Tag ${{ steps.version.outputs.tag }} created and pushed successfully"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -93,31 +100,45 @@ jobs:
             VERSION=${{ steps.version.outputs.version }}
             COMMIT=${{ github.sha }}
 
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          cat << EOF > release_notes.md
+          ## Changes in this Release
+          
+          ### Docker Images Published
+          - \`${{ env.IMAGE_NAME }}:${VERSION}\` - Exact version
+          - \`${{ env.IMAGE_NAME }}:latest\` - Latest version
+          
+          ### Pull Command
+          \`\`\`bash
+          # Exact version (recommended for production)
+          docker pull ${{ env.IMAGE_NAME }}:${VERSION}
+          
+          # Or latest
+          docker pull ${{ env.IMAGE_NAME }}:latest
+          \`\`\`
+          
+          ### Latest Commit
+          ${{ github.event.head_commit.message }}
+          
+          ### What's Changed
+          See all changes: https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}
+          EOF
+          
+          echo "Release notes generated"
+          
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          release_name: Release ${{ steps.version.outputs.tag }}
-          body: |
-            ## Changes in this Release
-            
-            ### Docker Images Published
-            - `${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}`
-            - `${{ env.IMAGE_NAME }}:latest`
-            
-            ### Pull Command
-            ```bash
-            docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-            ```
-            
-            ### Latest Commit
-            ${{ github.event.head_commit.message }}
-            
-            **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}
+          tag: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          bodyFile: release_notes.md
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Docker Hub description
         continue-on-error: true
@@ -171,19 +192,14 @@ jobs:
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
-          MAJOR="${VERSION_PARTS[0]}"
-          MINOR="${VERSION_PARTS[1]}"
           
           echo "## Release Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images Published:" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.IMAGE_NAME }}:${VERSION}\` (exact version)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE_NAME }}:${MAJOR}.${MINOR}\` (minor version tracking)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE_NAME }}:${MAJOR}\` (major version tracking)" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.IMAGE_NAME }}:latest\` (latest version)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
