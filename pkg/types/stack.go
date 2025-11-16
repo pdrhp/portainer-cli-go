@@ -129,3 +129,14 @@ type StackCreateSwarmGitPayload struct {
 	TLSSkipVerify            bool                `json:"tlsskipVerify,omitempty"`
 	FromAppTemplate          bool                `json:"fromAppTemplate,omitempty"`
 }
+
+type StackGitRedeployPayload struct {
+	Env                      []Pair `json:"env,omitempty"`
+	Prune                    bool   `json:"prune,omitempty"`
+	PullImage                bool   `json:"pullImage,omitempty"`
+	RepositoryAuthentication bool   `json:"repositoryAuthentication,omitempty"`
+	RepositoryPassword       string `json:"repositoryPassword,omitempty"`
+	RepositoryReferenceName  string `json:"repositoryReferenceName,omitempty"`
+	RepositoryUsername       string `json:"repositoryUsername,omitempty"`
+	StackName                string `json:"stackName,omitempty"`
+}

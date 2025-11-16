@@ -30,6 +30,19 @@ type CreateSwarmGitData struct {
 	AutoUpdateForceUpdate    bool
 }
 
+type RedeployGitData struct {
+	StackID                 string
+	EndpointID              string
+	RepositoryReferenceName string
+	UseAuth                 bool
+	RepositoryUsername      string
+	RepositoryPassword      string
+	EnvVars                 string
+	Prune                   bool
+	PullImage               bool
+	StackName               string
+}
+
 func RunCreateSwarmGitWizard() (*types.StackCreateSwarmGitPayload, int, error) {
 	var data CreateSwarmGitData
 
@@ -222,4 +235,118 @@ func RunCreateSwarmGitWizard() (*types.StackCreateSwarmGitPayload, int, error) {
 	}
 
 	return payload, endpointID, nil
+}
+
+func RunRedeployGitWizard() (*types.StackGitRedeployPayload, int, int, error) {
+	var data RedeployGitData
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Stack ID").
+				Value(&data.StackID).
+				Validate(func(s string) error {
+					if len(s) < 1 {
+						return errors.New("stack ID cannot be empty")
+					}
+					if _, err := strconv.Atoi(s); err != nil {
+						return errors.New("stack ID must be a number")
+					}
+					return nil
+				}),
+
+			huh.NewInput().
+				Title("Endpoint ID").
+				Value(&data.EndpointID).
+				Validate(func(s string) error {
+					if len(s) < 1 {
+						return errors.New("endpoint ID cannot be empty")
+					}
+					if _, err := strconv.Atoi(s); err != nil {
+						return errors.New("endpoint ID must be a number")
+					}
+					return nil
+				}),
+		),
+
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Git Reference (optional)").
+				Value(&data.RepositoryReferenceName).
+				Placeholder("refs/heads/main"),
+
+			huh.NewText().
+				Title("Environment Variables (optional)").
+				Description("Enter environment variables in KEY=value format, one per line").
+				Value(&data.EnvVars),
+
+			huh.NewInput().
+				Title("Stack Name (Kubernetes only, optional)").
+				Value(&data.StackName),
+
+			huh.NewConfirm().
+				Title("Prune services?").
+				Value(&data.Prune),
+
+			huh.NewConfirm().
+				Title("Force pull image?").
+				Value(&data.PullImage),
+		),
+
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Use Git Authentication?").
+				Value(&data.UseAuth),
+		),
+
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Git Username").
+				Value(&data.RepositoryUsername),
+
+			huh.NewInput().
+				Title("Git Password").
+				EchoMode(huh.EchoModePassword).
+				Value(&data.RepositoryPassword),
+		).WithHideFunc(func() bool { return !data.UseAuth }),
+	).WithTheme(huh.ThemeCharm())
+
+	if err := form.Run(); err != nil {
+		return nil, 0, 0, fmt.Errorf("wizard cancelled: %w", err)
+	}
+
+	payload := &types.StackGitRedeployPayload{
+		RepositoryReferenceName: data.RepositoryReferenceName,
+		Prune:                   data.Prune,
+		PullImage:               data.PullImage,
+		StackName:               data.StackName,
+	}
+
+	stackID, _ := strconv.Atoi(data.StackID)
+	endpointID, _ := strconv.Atoi(data.EndpointID)
+
+	if data.UseAuth {
+		payload.RepositoryAuthentication = true
+		payload.RepositoryUsername = data.RepositoryUsername
+		payload.RepositoryPassword = data.RepositoryPassword
+	}
+
+	if data.EnvVars != "" {
+		lines := strings.Split(strings.TrimSpace(data.EnvVars), "\n")
+		payload.Env = make([]types.Pair, 0, len(lines))
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line != "" {
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					payload.Env = append(payload.Env, types.Pair{
+						Name:  strings.TrimSpace(parts[0]),
+						Value: strings.TrimSpace(parts[1]),
+					})
+				}
+			}
+		}
+	}
+
+	return payload, stackID, endpointID, nil
 }

@@ -123,3 +123,29 @@ func TestStackCreateSwarmGitPayload_WithAutoUpdate(t *testing.T) {
 	assert.False(t, payload.AutoUpdate.ForcePullImage)
 	assert.True(t, payload.AutoUpdate.ForceUpdate)
 }
+
+func TestStackGitRedeployPayload_Creation(t *testing.T) {
+	payload := StackGitRedeployPayload{
+		RepositoryReferenceName:  "refs/heads/main",
+		RepositoryAuthentication: true,
+		RepositoryUsername:       "user",
+		RepositoryPassword:       "pass",
+		Env: []Pair{
+			{Name: "ENV_VAR", Value: "value"},
+		},
+		Prune:     true,
+		PullImage: false,
+		StackName: "test-stack",
+	}
+
+	assert.Equal(t, "refs/heads/main", payload.RepositoryReferenceName)
+	assert.True(t, payload.RepositoryAuthentication)
+	assert.Equal(t, "user", payload.RepositoryUsername)
+	assert.Equal(t, "pass", payload.RepositoryPassword)
+	assert.Len(t, payload.Env, 1)
+	assert.Equal(t, "ENV_VAR", payload.Env[0].Name)
+	assert.Equal(t, "value", payload.Env[0].Value)
+	assert.True(t, payload.Prune)
+	assert.False(t, payload.PullImage)
+	assert.Equal(t, "test-stack", payload.StackName)
+}

@@ -48,3 +48,18 @@ func (c *Client) CreateSwarmStackFromGit(ctx context.Context, endpointID int, pa
 
 	return &stack, nil
 }
+
+func (c *Client) RedeployStackFromGit(ctx context.Context, stackID int, endpointID int, payload types.StackGitRedeployPayload) (*types.Stack, error) {
+	path := fmt.Sprintf("/api/stacks/%d/git/redeploy", stackID)
+	if endpointID > 0 {
+		path += fmt.Sprintf("?endpointId=%d", endpointID)
+	}
+
+	var stack types.Stack
+	err := c.doRequest(ctx, "PUT", path, payload, &stack)
+	if err != nil {
+		return nil, fmt.Errorf("failed to redeploy stack from git: %w", err)
+	}
+
+	return &stack, nil
+}

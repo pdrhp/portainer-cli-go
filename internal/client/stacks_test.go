@@ -130,7 +130,6 @@ func TestClient_CreateSwarmStackFromGit_Success(t *testing.T) {
 			t.Errorf("expected path /api/stacks/create/swarm/repository, got %s", r.URL.Path)
 		}
 
-		// Check query parameter
 		endpointID := r.URL.Query().Get("endpointId")
 		if endpointID != "1" {
 			t.Errorf("expected endpointId=1, got %s", endpointID)
@@ -271,4 +270,88 @@ func TestClient_CreateSwarmStackFromGit_Unauthorized(t *testing.T) {
 	var httpErr *HTTPError
 	require.ErrorAs(t, err, &httpErr)
 	assert.Equal(t, 401, httpErr.StatusCode)
+}
+
+func TestClient_RedeployStackFromGit_Success(t *testing.T) {
+	expectedStack := types.Stack{
+		ID:   123,
+		Name: "test-stack",
+		Type: types.StackTypeDockerSwarm,
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			t.Errorf("expected PUT request, got %s", r.Method)
+		}
+		if r.URL.Path != "/api/stacks/123/git/redeploy" {
+			t.Errorf("expected path /api/stacks/123/git/redeploy, got %s", r.URL.Path)
+		}
+
+		endpointID := r.URL.Query().Get("endpointId")
+		if endpointID != "1" {
+			t.Errorf("expected endpointId=1, got %s", endpointID)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(expectedStack)
+	}))
+	defer server.Close()
+
+	client := New(server.URL)
+	client.SetToken("test-token")
+
+	payload := types.StackGitRedeployPayload{
+		Prune:     true,
+		PullImage: false,
+	}
+
+	result, err := client.RedeployStackFromGit(context.Background(), 123, 1, payload)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, expectedStack.ID, result.ID)
+	assert.Equal(t, expectedStack.Name, result.Name)
+}
+
+func TestClient_RedeployStackFromGit_WithoutEndpointID(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "" {
+			t.Errorf("expected no query parameters, got %s", r.URL.RawQuery)
+		}
+
+		stack := types.Stack{ID: 123, Name: "test-stack"}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(stack)
+	}))
+	defer server.Close()
+
+	client := New(server.URL)
+	client.SetToken("test-token")
+
+	payload := types.StackGitRedeployPayload{}
+
+	result, err := client.RedeployStackFromGit(context.Background(), 123, 0, payload)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+}
+
+func TestClient_RedeployStackFromGit_PermissionDenied(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`Permission denied`))
+	}))
+	defer server.Close()
+
+	client := New(server.URL)
+	client.SetToken("test-token")
+
+	payload := types.StackGitRedeployPayload{}
+
+	_, err := client.RedeployStackFromGit(context.Background(), 123, 1, payload)
+
+	require.Error(t, err)
+	var httpErr *HTTPError
+	require.ErrorAs(t, err, &httpErr)
+	assert.Equal(t, 403, httpErr.StatusCode)
 }

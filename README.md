@@ -80,6 +80,7 @@ cd app && go build -o portainer-go .
 - `config` - Manage CLI configuration
 - `stacks list` - List stacks with optional filters
 - `stacks create-swarm-git` - Create a Swarm stack from a Git repository
+- `stacks redeploy` - Redeploy a stack from its Git repository
 
 ## Examples for CI/CD
 
@@ -115,4 +116,26 @@ STACKS_JSON=$(./portainer-go stacks list --output json)
   --endpoint-id 1 \
   --auto-update-interval 1h \
   --auto-update-webhook my-webhook-id
+```
+
+### Redeploy Stack from Git
+
+```bash
+# Interactive redeploy (wizard)
+./portainer-go stacks redeploy
+
+# Redeploy with flags
+./portainer-go stacks redeploy 123 \
+  --endpoint-id 1 \
+  --repository-username user \
+  --repository-password pass \
+  --env DATABASE_URL=prod-db:5432 \
+  --prune \
+  --pull-image
+
+# Redeploy with new environment variables
+./portainer-go stacks redeploy 123 \
+  --endpoint-id 1 \
+  --env VERSION=v1.2.3 \
+  --env ENVIRONMENT=production
 ```

@@ -13,4 +13,5 @@ var stacksCmd = &cobra.Command{
 func init() {
 	stacksCmd.AddCommand(stacksListCmd)
 	stacksCmd.AddCommand(stacksCreateSwarmGitCmd)
+	stacksCmd.AddCommand(stacksRedeployGitCmd)
 }
