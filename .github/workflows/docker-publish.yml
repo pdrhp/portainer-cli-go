@@ -120,25 +120,77 @@ jobs:
           prerelease: false
 
       - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: ${{ env.IMAGE_NAME }}
-          readme-filepath: ./README.md
+        continue-on-error: true
+        run: |
+          echo "Updating Docker Hub description for ${{ env.IMAGE_NAME }}"
+          
+          # Get Docker Hub token
+          TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKER_USERNAME }}", "password": "${{ secrets.DOCKER_PASSWORD }}"}' \
+            https://hub.docker.com/v2/users/login/ | jq -r .token)
+          
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "Failed to get Docker Hub token"
+            exit 1
+          fi
+          
+          echo "Token acquired successfully"
+          
+          # Prepare README content
+          README_CONTENT=$(cat README.md | jq -Rs .)
+          
+          # Extract repository name (without username)
+          REPO_NAME="${{ env.IMAGE_NAME }}"
+          USERNAME=$(echo $REPO_NAME | cut -d'/' -f1)
+          REPOSITORY=$(echo $REPO_NAME | cut -d'/' -f2)
+          
+          echo "Username: $USERNAME"
+          echo "Repository: $REPOSITORY"
+          
+          # Update repository description
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
+            -H "Authorization: JWT ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"full_description\": $README_CONTENT, \"description\": \"CLI for managing Portainer stacks\"}" \
+            "https://hub.docker.com/v2/repositories/${USERNAME}/${REPOSITORY}/")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Docker Hub description updated successfully"
+          else
+            echo "Failed to update Docker Hub description"
+            exit 1
+          fi
 
       - name: Summary
         run: |
-          echo "## 🚀 Release Published!" >> $GITHUB_STEP_SUMMARY
+          VERSION="${{ steps.version.outputs.version }}"
+          IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          
+          echo "## Release Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images Published:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:${VERSION}\` (exact version)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:${MAJOR}.${MINOR}\` (minor version tracking)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:${MAJOR}\` (major version tracking)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:latest\` (latest version)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Command:" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Exact version (recommended for production)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.IMAGE_NAME }}:${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Latest version" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
