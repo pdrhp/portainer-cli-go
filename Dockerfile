@@ -1,35 +1,32 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25.1-alpine AS builder
 
-WORKDIR /app
+WORKDIR /build
 
 RUN apk add --no-cache git
 
 COPY go.mod go.sum ./
-
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -a -installsuffix cgo \
-    -o portainer-cli \
-    -ldflags="-w -s -X main.version=$(git describe --tags --always --dirty)" \
-    ./app
+RUN CGO_ENABLED=0 go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o portainer-go-cli \
+    .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
-
-RUN adduser -D -s /bin/sh portainer
+RUN apk --no-cache add ca-certificates && \
+    adduser -D -s /bin/sh portainer
 
 WORKDIR /home/portainer
 
-COPY --from=builder /app/portainer-cli .
+COPY --from=builder /build/portainer-go-cli .
 
-RUN chown portainer:portainer portainer-cli
+RUN chown portainer:portainer portainer-go-cli
 
 USER portainer
 
-ENTRYPOINT ["./portainer-cli"]
-
+ENTRYPOINT ["./portainer-go-cli"]
 CMD ["--help"]
