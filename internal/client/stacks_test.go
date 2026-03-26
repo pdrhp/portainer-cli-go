@@ -59,9 +59,9 @@ func TestClient_ListStacks_Success(t *testing.T) {
 
 func TestClient_ListStacks_WithFilters(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		expectedFilters := `{"EndpointId":1,"SwarmId":"test-swarm-id"}`
-		if r.URL.RawQuery != "filters="+expectedFilters {
-			t.Errorf("unexpected filters: %s", r.URL.RawQuery)
+		expectedQuery := "EndpointID=1&SwarmID=test-swarm-id"
+		if r.URL.RawQuery != expectedQuery {
+			t.Errorf("unexpected query: %s", r.URL.RawQuery)
 		}
 
 		stacks := []types.Stack{

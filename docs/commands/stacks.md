@@ -5,7 +5,7 @@ Manage Docker stacks in Portainer environment.
 ## Usage
 
 ```bash
-portainer-go stacks [command]
+portainer-cli stacks [command]
 ```
 
 ## Available Commands
@@ -19,7 +19,7 @@ portainer-go stacks [command]
 ### List All Stacks
 
 ```bash
-portainer-go stacks list
+portainer-cli stacks list
 ```
 
 Output:
@@ -33,19 +33,19 @@ ID  NAME        TYPE    STATUS    ENDPOINT  SWARM ID
 ### List in JSON Format
 
 ```bash
-portainer-go stacks list --output json
+portainer-cli stacks list --output json
 ```
 
 ### Filter by Endpoint
 
 ```bash
-portainer-go stacks list --endpoint-id 1
+portainer-cli stacks list --endpoint-id 1
 ```
 
 ### Filter by Swarm Cluster
 
 ```bash
-portainer-go stacks list --swarm-id jpofkc0i9uo9wtx1zesuk649w
+portainer-cli stacks list --swarm-id jpofkc0i9uo9wtx1zesuk649w
 ```
 
 ## Flags
@@ -113,7 +113,7 @@ Create a new Docker Swarm stack by pulling the compose file from a Git repositor
 ### Usage
 
 ```bash
-portainer-go stacks create-swarm-git [flags]
+portainer-cli stacks create-swarm-git [flags]
 ```
 
 ### Examples
@@ -121,7 +121,7 @@ portainer-go stacks create-swarm-git [flags]
 #### Interactive Mode (Wizard)
 
 ```bash
-portainer-go stacks create-swarm-git
+portainer-cli stacks create-swarm-git
 ```
 
 This will start an interactive wizard that guides you through all configuration options.
@@ -129,7 +129,7 @@ This will start an interactive wizard that guides you through all configuration 
 #### Basic Creation with Required Flags
 
 ```bash
-portainer-go stacks create-swarm-git \
+portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -139,7 +139,7 @@ portainer-go stacks create-swarm-git \
 #### With Custom Compose File and Branch
 
 ```bash
-portainer-go stacks create-swarm-git \
+portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -151,7 +151,7 @@ portainer-go stacks create-swarm-git \
 #### With Environment Variables
 
 ```bash
-portainer-go stacks create-swarm-git \
+portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -163,7 +163,7 @@ portainer-go stacks create-swarm-git \
 #### With Git Authentication
 
 ```bash
-portainer-go stacks create-swarm-git \
+portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/private-repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -175,7 +175,7 @@ portainer-go stacks create-swarm-git \
 #### With GitOps Auto-Update
 
 ```bash
-portainer-go stacks create-swarm-git \
+portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -230,7 +230,7 @@ Stack name or webhook ID already exists. Use a different name or webhook ID.
 
 ##### 401/403 - Authentication Failed
 
-Your authentication token is invalid or expired. Run `portainer-go auth` again.
+Your authentication token is invalid or expired. Run `portainer-cli auth` again.
 
 ### GitOps Auto-Update
 
@@ -256,7 +256,7 @@ Redeploy an existing stack by pulling the latest changes from its Git repository
 ### Usage
 
 ```bash
-portainer-go stacks redeploy [stack-id] [flags]
+portainer-cli stacks redeploy [stack-id] [flags]
 ```
 
 ### Examples
@@ -264,19 +264,19 @@ portainer-go stacks redeploy [stack-id] [flags]
 #### Redeploy with Stack ID as Argument
 
 ```bash
-portainer-go stacks redeploy 123 --endpoint-id 1 --env DATABASE_URL=prod-db:5432
+portainer-cli stacks redeploy 123 --endpoint-id 1 --env DATABASE_URL=prod-db:5432
 ```
 
 #### Redeploy with Stack ID as Flag
 
 ```bash
-portainer-go stacks redeploy --stack-id 123 --prune --pull-image
+portainer-cli stacks redeploy --stack-id 123 --prune --pull-image
 ```
 
 #### Redeploy with Git Authentication
 
 ```bash
-portainer-go stacks redeploy 123 \
+portainer-cli stacks redeploy 123 \
   --endpoint-id 1 \
   --repository-username deploy-user \
   --repository-password $GIT_TOKEN \
@@ -286,7 +286,7 @@ portainer-go stacks redeploy 123 \
 #### Redeploy with Environment Variables
 
 ```bash
-portainer-go stacks redeploy 123 \
+portainer-cli stacks redeploy 123 \
   --endpoint-id 1 \
   --env VERSION=v1.2.3 \
   --env ENVIRONMENT=production \
@@ -298,7 +298,7 @@ portainer-go stacks redeploy 123 \
 #### Redeploy with Complete Configuration
 
 ```bash
-portainer-go stacks redeploy 123 \
+portainer-cli stacks redeploy 123 \
   --endpoint-id 1 \
   --repository-reference-name refs/heads/main \
   --repository-username bot-user \
@@ -314,7 +314,7 @@ portainer-go stacks redeploy 123 \
 #### Interactive Redeploy (Wizard)
 
 ```bash
-portainer-go stacks redeploy
+portainer-cli stacks redeploy
 ```
 
 This will start an interactive wizard that guides you through the redeploy configuration.
@@ -364,7 +364,7 @@ Stack with the specified ID doesn't exist.
 
 ##### 401 - Authentication Failed
 
-Your authentication token is invalid or expired. Run `portainer-go auth` again.
+Your authentication token is invalid or expired. Run `portainer-cli auth` again.
 
 ### Important Notes
 

@@ -5,7 +5,7 @@ Authenticate with Portainer server to obtain a JWT token for subsequent operatio
 ## Usage
 
 ```bash
-portainer-go auth [flags]
+portainer-cli auth [flags]
 ```
 
 ## Examples
@@ -13,7 +13,7 @@ portainer-go auth [flags]
 ### Interactive Authentication
 
 ```bash
-portainer-go auth
+portainer-cli auth
 ```
 
 This will prompt you to enter your username and password interactively.
@@ -21,7 +21,7 @@ This will prompt you to enter your username and password interactively.
 ### Authentication with Flags
 
 ```bash
-portainer-go auth --username admin --password mypassword
+portainer-cli auth --username admin --password mypassword
 ```
 
 ### Authentication with Config Values
@@ -29,9 +29,9 @@ portainer-go auth --username admin --password mypassword
 If you have previously configured credentials:
 
 ```bash
-portainer-go config set username admin
-portainer-go config set password mypassword
-portainer-go auth
+portainer-cli config set username admin
+portainer-cli config set password mypassword
+portainer-cli auth
 ```
 
 ## Flags
@@ -59,4 +59,4 @@ portainer-go auth
 
 ## Configuration
 
-The authentication token is stored in `~/.portainer-go-cli/config.yaml` and reused automatically until expiration.
+The authentication token is stored in `~/.portainer-cli/config.yaml` and reused automatically until expiration.

@@ -5,7 +5,7 @@ Manage Portainer CLI global configuration.
 ## Usage
 
 ```bash
-portainer-go config [command]
+portainer-cli config [command]
 ```
 
 ## Available Commands
@@ -18,26 +18,26 @@ portainer-go config [command]
 ### Set Server URL
 
 ```bash
-portainer-go config set server-url https://portainer-go.company.com
+portainer-cli config set server-url https://portainer.company.com
 ```
 
 ### Set Credentials
 
 ```bash
-portainer-go config set username admin
-portainer-go config set password mypassword
+portainer-cli config set username admin
+portainer-cli config set password mypassword
 ```
 
 ### View Current Configuration
 
 ```bash
-portainer-go config get
+portainer-cli config get
 ```
 
 ### Get Specific Value
 
 ```bash
-portainer-go config get server-url
+portainer-cli config get server-url
 ```
 
 ## Configuration Keys
@@ -49,11 +49,11 @@ portainer-go config get server-url
 
 ## Configuration File
 
-Configuration is stored in `~/.portainer-go-cli/config.yaml`
+Configuration is stored in `~/.portainer-cli/config.yaml`
 
 Example:
 ```yaml
-server_url: https://portainer-go.company.com
+server_url: https://portainer.company.com
 username: admin
 password: mypassword
 token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...

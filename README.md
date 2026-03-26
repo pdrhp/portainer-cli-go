@@ -15,16 +15,16 @@ A command-line interface for managing Portainer stacks and resources in CI/CD pi
 ### From Source
 
 ```bash
-git clone https://github.com/yourorg/portainer-go.git
-cd portainer-go
-cd app && go build -o portainer-go .
+git clone https://github.com/pdrhp/portainer-go-cli.git
+cd portainer-go-cli/app
+go build -o portainer-cli .
 ```
 
 ### Using Docker
 
 ```bash
-docker build -t portainer-go app/
-docker run --rm portainer-go --help
+docker build -t portainer-cli .
+docker run --rm portainer-cli --help
 ```
 
 ## Quick Start
@@ -32,33 +32,33 @@ docker run --rm portainer-go --help
 ### 1. Configure Portainer server
 
 ```bash
-./portainer-go config set server-url https://your-portainer-instance.com
+./portainer-cli config set server-url https://your-portainer-instance.com
 ```
 
 ### 2. Authenticate
 
 ```bash
 # Interactive authentication
-./portainer-go auth
+./portainer-cli auth
 
 # Or with flags
-./portainer-go auth --username admin --password yourpassword
+./portainer-cli auth --username admin --password yourpassword
 ```
 
 ### 3. List stacks
 
 ```bash
 # List all stacks (table format)
-./portainer-go stacks list
+./portainer-cli stacks list
 
 # List in JSON format (perfect for CI/CD)
-./portainer-go stacks list --output json
+./portainer-cli stacks list --output json
 
 # Filter by endpoint
-./portainer-go stacks list --endpoint-id 1
+./portainer-cli stacks list --endpoint-id 1
 
 # Filter by Swarm cluster
-./portainer-go stacks list --swarm-id your-swarm-id
+./portainer-cli stacks list --swarm-id your-swarm-id
 ```
 
 ## Development
@@ -68,10 +68,10 @@ docker run --rm portainer-go --help
 go test ./...
 
 # Build
-cd app && go build -o portainer-go .
+go build -o portainer-cli .
 
 # Run
-./portainer-go --help
+./portainer-cli --help
 ```
 
 ## Available Commands
@@ -86,30 +86,30 @@ cd app && go build -o portainer-go .
 
 ```bash
 # Get stacks in JSON format for processing
-STACKS_JSON=$(./portainer-go stacks list --output json)
+STACKS_JSON=$(./portainer-cli stacks list --output json)
 
 # Check if a specific stack exists
-./portainer-go stacks list --output json | jq '.[] | select(.Name == "my-stack")'
+./portainer-cli stacks list --output json | jq '.[] | select(.Name == "my-stack")'
 
 # Count total stacks
-./portainer-go stacks list --output json | jq '. | length'
+./portainer-cli stacks list --output json | jq '. | length'
 ```
 
 ### Create Swarm Stack from Git
 
 ```bash
 # Interactive creation (wizard)
-./portainer-go stacks create-swarm-git
+./portainer-cli stacks create-swarm-git
 
 # Create with flags
-./portainer-go stacks create-swarm-git \
+./portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
   --endpoint-id 1
 
 # Create with auto-update (GitOps)
-./portainer-go stacks create-swarm-git \
+./portainer-cli stacks create-swarm-git \
   --name my-stack \
   --repository-url https://github.com/user/repo \
   --swarm-id jpofkc0i9uo9wtx1zesuk649w \
@@ -122,10 +122,10 @@ STACKS_JSON=$(./portainer-go stacks list --output json)
 
 ```bash
 # Interactive redeploy (wizard)
-./portainer-go stacks redeploy
+./portainer-cli stacks redeploy
 
 # Redeploy with flags
-./portainer-go stacks redeploy 123 \
+./portainer-cli stacks redeploy 123 \
   --endpoint-id 1 \
   --repository-username user \
   --repository-password pass \
@@ -134,7 +134,7 @@ STACKS_JSON=$(./portainer-go stacks list --output json)
   --pull-image
 
 # Redeploy with new environment variables
-./portainer-go stacks redeploy 123 \
+./portainer-cli stacks redeploy 123 \
   --endpoint-id 1 \
   --env VERSION=v1.2.3 \
   --env ENVIRONMENT=production
