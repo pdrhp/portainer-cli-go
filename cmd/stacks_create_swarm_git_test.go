@@ -50,6 +50,7 @@ func TestStacksCreateSwarmGitCmd_Flags(t *testing.T) {
 
 	envFlag := cmd.Flag("env")
 	assert.NotNil(t, envFlag)
+	assert.Equal(t, "stringArray", envFlag.Value.Type())
 
 	additionalFilesFlag := cmd.Flag("additional-files")
 	assert.NotNil(t, additionalFilesFlag)

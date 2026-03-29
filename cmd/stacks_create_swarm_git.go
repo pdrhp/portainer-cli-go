@@ -188,7 +188,7 @@ func init() {
 	stacksCreateSwarmGitCmd.Flags().BoolVar(&createSwarmGitTLSSkipVerify, "tlsskip-verify", false, "Skip TLS verification for Git repository")
 	stacksCreateSwarmGitCmd.Flags().StringVar(&createSwarmGitRepositoryUsername, "repository-username", "", "Username for Git repository authentication")
 	stacksCreateSwarmGitCmd.Flags().StringVar(&createSwarmGitRepositoryPassword, "repository-password", "", "Password for Git repository authentication")
-	stacksCreateSwarmGitCmd.Flags().StringSliceVar(&createSwarmGitEnv, "env", []string{}, "Environment variables (format: KEY=value)")
+	stacksCreateSwarmGitCmd.Flags().StringArrayVar(&createSwarmGitEnv, "env", []string{}, "Environment variables (format: KEY=value)")
 	stacksCreateSwarmGitCmd.Flags().StringSliceVar(&createSwarmGitAdditionalFiles, "additional-files", []string{}, "Additional compose files")
 	stacksCreateSwarmGitCmd.Flags().StringVar(&createSwarmGitAutoUpdateInterval, "auto-update-interval", "", "Auto-update interval (e.g., 1h, 30m)")
 	stacksCreateSwarmGitCmd.Flags().StringVar(&createSwarmGitAutoUpdateWebhook, "auto-update-webhook", "", "Webhook ID for auto-update")

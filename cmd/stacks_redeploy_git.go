@@ -175,7 +175,7 @@ func init() {
 	stacksRedeployGitCmd.Flags().StringVar(&redeployGitRepositoryReferenceName, "repository-reference-name", "", "Git reference (branch/tag)")
 	stacksRedeployGitCmd.Flags().StringVar(&redeployGitRepositoryUsername, "repository-username", "", "Username for Git repository authentication")
 	stacksRedeployGitCmd.Flags().StringVar(&redeployGitRepositoryPassword, "repository-password", "", "Password for Git repository authentication")
-	stacksRedeployGitCmd.Flags().StringSliceVar(&redeployGitEnv, "env", []string{}, "Environment variables (format: KEY=value)")
+	stacksRedeployGitCmd.Flags().StringArrayVar(&redeployGitEnv, "env", []string{}, "Environment variables (format: KEY=value)")
 	stacksRedeployGitCmd.Flags().BoolVar(&redeployGitPrune, "prune", false, "Remove services that are no longer referenced")
 	stacksRedeployGitCmd.Flags().BoolVar(&redeployGitPullImage, "pull-image", false, "Force pull the latest image")
 	stacksRedeployGitCmd.Flags().StringVar(&redeployGitStackName, "stack-name", "", "Stack name (Kubernetes only)")

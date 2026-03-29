@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestStacksRedeployGitCmd_EnvFlagUsesStringArray(t *testing.T) {
+	envFlag := stacksRedeployGitCmd.Flag("env")
+	require.NotNil(t, envFlag)
+	assert.Equal(t, "stringArray", envFlag.Value.Type())
+}
+
 func TestBuildRedeployPayloadFromFlags_OnlySpecifiedFields(t *testing.T) {
 	// Reset all flags first
 	redeployGitRepositoryReferenceName = ""
