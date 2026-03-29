@@ -160,6 +160,20 @@ portainer-cli stacks create-swarm-git \
   --env API_KEY=secret123
 ```
 
+#### With Environment Variables Containing Spaces (Cron)
+
+```bash
+portainer-cli stacks create-swarm-git \
+  --name my-stack \
+  --repository-url https://github.com/user/repo \
+  --swarm-id jpofkc0i9uo9wtx1zesuk649w \
+  --endpoint-id 1 \
+  --env 'SCHEDULER_SYNC_PEAK=*/15 * * * *' \
+  --env "SCHEDULER_WINDOW=Mon-Fri 08:00-18:00"
+```
+
+Use shell quoting whenever the value contains spaces. The key must match `^[A-Za-z_][A-Za-z0-9_]*$` (starts with `A-Z`, `a-z`, or `_`, followed by alphanumeric or `_`), while the value can contain spaces.
+
 #### With Git Authentication
 
 ```bash
@@ -203,7 +217,7 @@ portainer-cli stacks create-swarm-git \
 
 #### Stack Configuration
 
-- `--env string` - Environment variables (format: `KEY=value`, can be used multiple times)
+- `--env string` - Environment variables (format: `KEY=value`, key must match `^[A-Za-z_][A-Za-z0-9_]*$`, value may contain spaces when shell-quoted, can be used multiple times)
 - `--additional-files string` - Additional compose files (can be used multiple times)
 
 #### GitOps Auto-Update
@@ -295,6 +309,18 @@ portainer-cli stacks redeploy 123 \
   --prune
 ```
 
+#### Redeploy with Environment Variables Containing Spaces (Cron)
+
+```bash
+portainer-cli stacks redeploy 123 \
+  --endpoint-id 1 \
+  --env 'SCHEDULER_SYNC_PEAK=*/15 * * * *' \
+  --env "SCHEDULER_WINDOW=Mon-Fri 08:00-18:00" \
+  --prune
+```
+
+Quote `--env KEY=value` in your shell when `value` contains spaces. Keys must match `^[A-Za-z_][A-Za-z0-9_]*$`; values can contain spaces.
+
 #### Redeploy with Complete Configuration
 
 ```bash
@@ -338,7 +364,7 @@ This will start an interactive wizard that guides you through the redeploy confi
 
 #### Stack Configuration
 
-- `--env string` - Environment variables (format: `KEY=value`, can be used multiple times)
+- `--env string` - Environment variables (format: `KEY=value`, key must match `^[A-Za-z_][A-Za-z0-9_]*$`, value may contain spaces when shell-quoted, can be used multiple times)
 - `--prune` - Remove services that are no longer referenced in the compose file
 - `--pull-image` - Force pull the latest image even if already present
 - `--stack-name string` - Stack name override (Kubernetes only)

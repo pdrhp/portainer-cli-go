@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/pdrhp/portainer-go-cli/internal/envvars"
 	"github.com/pdrhp/portainer-go-cli/pkg/types"
 )
 
@@ -193,26 +194,20 @@ func RunCreateSwarmGitWizard() (*types.StackCreateSwarmGitPayload, int, error) {
 	}
 
 	if data.UseAuth {
+		if err := validateGitAuthInput(data.RepositoryUsername, data.RepositoryPassword); err != nil {
+			return nil, 0, err
+		}
 		payload.RepositoryAuthentication = true
 		payload.RepositoryUsername = data.RepositoryUsername
 		payload.RepositoryPassword = data.RepositoryPassword
 	}
 
 	if data.EnvVars != "" {
-		lines := strings.Split(strings.TrimSpace(data.EnvVars), "\n")
-		payload.Env = make([]types.Pair, 0, len(lines))
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" {
-				parts := strings.SplitN(line, "=", 2)
-				if len(parts) == 2 {
-					payload.Env = append(payload.Env, types.Pair{
-						Name:  strings.TrimSpace(parts[0]),
-						Value: strings.TrimSpace(parts[1]),
-					})
-				}
-			}
+		parsedEnv, err := parseWizardEnvText(data.EnvVars)
+		if err != nil {
+			return nil, 0, err
 		}
+		payload.Env = parsedEnv
 	}
 
 	if data.AdditionalFiles != "" {
@@ -326,27 +321,38 @@ func RunRedeployGitWizard() (*types.StackGitRedeployPayload, int, int, error) {
 	endpointID, _ := strconv.Atoi(data.EndpointID)
 
 	if data.UseAuth {
+		if err := validateGitAuthInput(data.RepositoryUsername, data.RepositoryPassword); err != nil {
+			return nil, 0, 0, err
+		}
 		payload.RepositoryAuthentication = true
 		payload.RepositoryUsername = data.RepositoryUsername
 		payload.RepositoryPassword = data.RepositoryPassword
 	}
 
 	if data.EnvVars != "" {
-		lines := strings.Split(strings.TrimSpace(data.EnvVars), "\n")
-		payload.Env = make([]types.Pair, 0, len(lines))
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" {
-				parts := strings.SplitN(line, "=", 2)
-				if len(parts) == 2 {
-					payload.Env = append(payload.Env, types.Pair{
-						Name:  strings.TrimSpace(parts[0]),
-						Value: strings.TrimSpace(parts[1]),
-					})
-				}
-			}
+		parsedEnv, err := parseWizardEnvText(data.EnvVars)
+		if err != nil {
+			return nil, 0, 0, err
 		}
+		payload.Env = parsedEnv
 	}
 
 	return payload, stackID, endpointID, nil
+}
+
+func parseWizardEnvText(input string) ([]types.Pair, error) {
+	parsed, err := envvars.Parse(input)
+	if err != nil {
+		return nil, fmt.Errorf("invalid environment variables: %w", err)
+	}
+
+	return parsed, nil
+}
+
+func validateGitAuthInput(username string, password string) error {
+	if strings.TrimSpace(username) == "" || strings.TrimSpace(password) == "" {
+		return errors.New("git username and password are required when authentication is enabled")
+	}
+
+	return nil
 }

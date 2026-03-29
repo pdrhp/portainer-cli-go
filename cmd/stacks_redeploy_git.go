@@ -8,6 +8,7 @@ import (
 
 	"github.com/pdrhp/portainer-go-cli/internal/client"
 	"github.com/pdrhp/portainer-go-cli/internal/config"
+	"github.com/pdrhp/portainer-go-cli/internal/envvars"
 	"github.com/pdrhp/portainer-go-cli/internal/wizard"
 	"github.com/pdrhp/portainer-go-cli/pkg/types"
 	"github.com/spf13/cobra"
@@ -71,6 +72,8 @@ Examples:
 			}
 		} else if redeployGitStackID > 0 {
 			stackID = redeployGitStackID
+		} else if hasNonInteractiveRedeployInput() {
+			return fmt.Errorf("stack ID is required when using redeploy flags (use positional [stack-id] or --stack-id)")
 		} else {
 			// Use wizard
 			wizardPayload, wizardStackID, wizardEndpointID, err := wizard.RunRedeployGitWizard()
@@ -88,7 +91,10 @@ Examples:
 			}
 			endpointID = redeployGitEndpointID
 
-			payload = buildRedeployPayloadFromFlags()
+			payload, err = buildRedeployPayloadFromFlags()
+			if err != nil {
+				return fmt.Errorf("invalid redeploy payload flags: %w", err)
+			}
 		}
 
 		cl := client.New(serverURL)
@@ -121,7 +127,18 @@ Examples:
 	},
 }
 
-func buildRedeployPayloadFromFlags() types.StackGitRedeployPayload {
+func hasNonInteractiveRedeployInput() bool {
+	return redeployGitEndpointID > 0 ||
+		redeployGitRepositoryReferenceName != "" ||
+		redeployGitRepositoryUsername != "" ||
+		redeployGitRepositoryPassword != "" ||
+		len(redeployGitEnv) > 0 ||
+		redeployGitPrune ||
+		redeployGitPullImage ||
+		redeployGitStackName != ""
+}
+
+func buildRedeployPayloadFromFlags() (types.StackGitRedeployPayload, error) {
 	payload := types.StackGitRedeployPayload{
 		RepositoryReferenceName: redeployGitRepositoryReferenceName,
 		StackName:               redeployGitStackName,
@@ -129,26 +146,27 @@ func buildRedeployPayloadFromFlags() types.StackGitRedeployPayload {
 		PullImage:               redeployGitPullImage,
 	}
 
-	if redeployGitRepositoryUsername != "" && redeployGitRepositoryPassword != "" {
+	hasRepoUser := redeployGitRepositoryUsername != ""
+	hasRepoPass := redeployGitRepositoryPassword != ""
+	if hasRepoUser != hasRepoPass {
+		return types.StackGitRedeployPayload{}, fmt.Errorf("--repository-username and --repository-password must be provided together")
+	}
+
+	if hasRepoUser {
 		payload.RepositoryAuthentication = true
 		payload.RepositoryUsername = redeployGitRepositoryUsername
 		payload.RepositoryPassword = redeployGitRepositoryPassword
 	}
 
 	if len(redeployGitEnv) > 0 {
-		payload.Env = make([]types.Pair, 0, len(redeployGitEnv))
-		for _, env := range redeployGitEnv {
-			parts := strings.SplitN(env, "=", 2)
-			if len(parts) == 2 {
-				payload.Env = append(payload.Env, types.Pair{
-					Name:  parts[0],
-					Value: parts[1],
-				})
-			}
+		env, err := envvars.Parse(strings.Join(redeployGitEnv, "\n"))
+		if err != nil {
+			return types.StackGitRedeployPayload{}, err
 		}
+		payload.Env = env
 	}
 
-	return payload
+	return payload, nil
 }
 
 func init() {

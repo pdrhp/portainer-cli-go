@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStacksCreateSwarmGitCmd_Flags(t *testing.T) {
@@ -87,7 +88,8 @@ func TestBuildPayloadFromFlags_BasicFields(t *testing.T) {
 	createSwarmGitAutoUpdateForcePullImage = false
 	createSwarmGitAutoUpdateForceUpdate = false
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	// Test basic fields
 	assert.Equal(t, "test-stack", payload.Name)
@@ -112,7 +114,8 @@ func TestBuildPayloadFromFlags_WithAuth(t *testing.T) {
 	createSwarmGitAutoUpdateInterval = ""
 	createSwarmGitAutoUpdateWebhook = ""
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.True(t, payload.RepositoryAuthentication)
 	assert.Equal(t, "testuser", payload.RepositoryUsername)
@@ -130,7 +133,8 @@ func TestBuildPayloadFromFlags_WithEnvVars(t *testing.T) {
 	createSwarmGitAutoUpdateInterval = ""
 	createSwarmGitAutoUpdateWebhook = ""
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.Len(t, payload.Env, 2)
 	assert.Equal(t, "KEY1", payload.Env[0].Name)
@@ -150,7 +154,8 @@ func TestBuildPayloadFromFlags_WithAdditionalFiles(t *testing.T) {
 	createSwarmGitAutoUpdateInterval = ""
 	createSwarmGitAutoUpdateWebhook = ""
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.Len(t, payload.AdditionalFiles, 2)
 	assert.Equal(t, "file1.yml", payload.AdditionalFiles[0])
@@ -170,7 +175,8 @@ func TestBuildPayloadFromFlags_WithAutoUpdate(t *testing.T) {
 	createSwarmGitAutoUpdateForcePullImage = true
 	createSwarmGitAutoUpdateForceUpdate = false
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.NotNil(t, payload.AutoUpdate)
 	assert.Equal(t, "1h", payload.AutoUpdate.Interval)
@@ -190,7 +196,8 @@ func TestBuildPayloadFromFlags_WithoutAutoUpdate(t *testing.T) {
 	createSwarmGitAutoUpdateInterval = ""
 	createSwarmGitAutoUpdateWebhook = ""
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.Nil(t, payload.AutoUpdate)
 }
@@ -209,9 +216,76 @@ func TestBuildPayloadFromFlags_CustomComposeFile(t *testing.T) {
 	createSwarmGitAutoUpdateInterval = ""
 	createSwarmGitAutoUpdateWebhook = ""
 
-	payload := buildPayloadFromFlags()
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.Equal(t, "custom-compose.yml", payload.ComposeFile)
 	assert.Equal(t, "refs/heads/develop", payload.RepositoryReferenceName)
 	assert.True(t, payload.TLSSkipVerify)
+}
+
+func TestBuildPayloadFromFlags_WithEnvContainingSpaces(t *testing.T) {
+	createSwarmGitName = "test-stack"
+	createSwarmGitRepositoryURL = "https://github.com/user/repo"
+	createSwarmGitSwarmID = "jpofkc0i9uo9wtx1zesuk649w"
+	createSwarmGitRepositoryUsername = ""
+	createSwarmGitRepositoryPassword = ""
+	createSwarmGitEnv = []string{"SCHEDULER_SYNC_PEAK=*/15 * * * *"}
+	createSwarmGitAdditionalFiles = []string{}
+	createSwarmGitAutoUpdateInterval = ""
+	createSwarmGitAutoUpdateWebhook = ""
+
+	payload, err := buildPayloadFromFlags()
+	require.NoError(t, err)
+	require.Len(t, payload.Env, 1)
+	assert.Equal(t, "SCHEDULER_SYNC_PEAK", payload.Env[0].Name)
+	assert.Equal(t, "*/15 * * * *", payload.Env[0].Value)
+}
+
+func TestBuildPayloadFromFlags_InvalidEnvReturnsError(t *testing.T) {
+	createSwarmGitName = "test-stack"
+	createSwarmGitRepositoryURL = "https://github.com/user/repo"
+	createSwarmGitSwarmID = "jpofkc0i9uo9wtx1zesuk649w"
+	createSwarmGitRepositoryUsername = ""
+	createSwarmGitRepositoryPassword = ""
+	createSwarmGitEnv = []string{"BAD KEY=value"}
+	createSwarmGitAdditionalFiles = []string{}
+	createSwarmGitAutoUpdateInterval = ""
+	createSwarmGitAutoUpdateWebhook = ""
+
+	_, err := buildPayloadFromFlags()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid env var key")
+}
+
+func TestBuildPayloadFromFlags_AuthMissingPasswordReturnsError(t *testing.T) {
+	createSwarmGitName = "test-stack"
+	createSwarmGitRepositoryURL = "https://github.com/user/repo"
+	createSwarmGitSwarmID = "jpofkc0i9uo9wtx1zesuk649w"
+	createSwarmGitRepositoryUsername = "testuser"
+	createSwarmGitRepositoryPassword = ""
+	createSwarmGitEnv = []string{}
+	createSwarmGitAdditionalFiles = []string{}
+	createSwarmGitAutoUpdateInterval = ""
+	createSwarmGitAutoUpdateWebhook = ""
+
+	_, err := buildPayloadFromFlags()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be provided together")
+}
+
+func TestBuildPayloadFromFlags_AuthMissingUsernameReturnsError(t *testing.T) {
+	createSwarmGitName = "test-stack"
+	createSwarmGitRepositoryURL = "https://github.com/user/repo"
+	createSwarmGitSwarmID = "jpofkc0i9uo9wtx1zesuk649w"
+	createSwarmGitRepositoryUsername = ""
+	createSwarmGitRepositoryPassword = "testpass"
+	createSwarmGitEnv = []string{}
+	createSwarmGitAdditionalFiles = []string{}
+	createSwarmGitAutoUpdateInterval = ""
+	createSwarmGitAutoUpdateWebhook = ""
+
+	_, err := buildPayloadFromFlags()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be provided together")
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/pdrhp/portainer-go-cli/internal/client"
 	"github.com/pdrhp/portainer-go-cli/internal/config"
+	"github.com/pdrhp/portainer-go-cli/internal/envvars"
 	"github.com/pdrhp/portainer-go-cli/internal/wizard"
 	"github.com/pdrhp/portainer-go-cli/pkg/types"
 	"github.com/spf13/cobra"
@@ -91,7 +92,10 @@ Examples:
 				return fmt.Errorf("flag --endpoint-id is required when not using wizard")
 			}
 
-			payload = buildPayloadFromFlags()
+			payload, err = buildPayloadFromFlags()
+			if err != nil {
+				return fmt.Errorf("invalid input flags: %w", err)
+			}
 			endpointID = createSwarmGitEndpointID
 		}
 
@@ -123,7 +127,7 @@ Examples:
 	},
 }
 
-func buildPayloadFromFlags() types.StackCreateSwarmGitPayload {
+func buildPayloadFromFlags() (types.StackCreateSwarmGitPayload, error) {
 	payload := types.StackCreateSwarmGitPayload{
 		Name:                    createSwarmGitName,
 		RepositoryURL:           createSwarmGitRepositoryURL,
@@ -142,23 +146,24 @@ func buildPayloadFromFlags() types.StackCreateSwarmGitPayload {
 		payload.RepositoryReferenceName = "refs/heads/master"
 	}
 
-	if createSwarmGitRepositoryUsername != "" || createSwarmGitRepositoryPassword != "" {
+	hasRepoUser := createSwarmGitRepositoryUsername != ""
+	hasRepoPass := createSwarmGitRepositoryPassword != ""
+	if hasRepoUser != hasRepoPass {
+		return types.StackCreateSwarmGitPayload{}, fmt.Errorf("--repository-username and --repository-password must be provided together")
+	}
+
+	if hasRepoUser {
 		payload.RepositoryAuthentication = true
 		payload.RepositoryUsername = createSwarmGitRepositoryUsername
 		payload.RepositoryPassword = createSwarmGitRepositoryPassword
 	}
 
 	if len(createSwarmGitEnv) > 0 {
-		payload.Env = make([]types.Pair, 0, len(createSwarmGitEnv))
-		for _, env := range createSwarmGitEnv {
-			parts := strings.SplitN(env, "=", 2)
-			if len(parts) == 2 {
-				payload.Env = append(payload.Env, types.Pair{
-					Name:  parts[0],
-					Value: parts[1],
-				})
-			}
+		env, err := envvars.Parse(strings.Join(createSwarmGitEnv, "\n"))
+		if err != nil {
+			return types.StackCreateSwarmGitPayload{}, err
 		}
+		payload.Env = env
 	}
 
 	if createSwarmGitAutoUpdateInterval != "" || createSwarmGitAutoUpdateWebhook != "" {
@@ -170,7 +175,7 @@ func buildPayloadFromFlags() types.StackCreateSwarmGitPayload {
 		}
 	}
 
-	return payload
+	return payload, nil
 }
 
 func init() {

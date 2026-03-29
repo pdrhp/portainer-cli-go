@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBuildRedeployPayloadFromFlags_OnlySpecifiedFields(t *testing.T) {
@@ -23,7 +24,8 @@ func TestBuildRedeployPayloadFromFlags_OnlySpecifiedFields(t *testing.T) {
 	redeployGitEnv = []string{"KEY1=value1"}
 	redeployGitPrune = true
 
-	payload := buildRedeployPayloadFromFlags()
+	payload, err := buildRedeployPayloadFromFlags()
+	require.NoError(t, err)
 
 	assert.Equal(t, "refs/heads/develop", payload.RepositoryReferenceName)
 	assert.True(t, payload.RepositoryAuthentication)
@@ -46,7 +48,8 @@ func TestBuildRedeployPayloadFromFlags_WithFlagChanges(t *testing.T) {
 	redeployGitPullImage = false
 	redeployGitStackName = ""
 
-	payload := buildRedeployPayloadFromFlags()
+	payload, err := buildRedeployPayloadFromFlags()
+	require.NoError(t, err)
 
 	// All boolean flags are included with their default values
 	assert.False(t, payload.Prune)
@@ -66,7 +69,8 @@ func TestBuildRedeployPayloadFromFlags_EmptyFields(t *testing.T) {
 	redeployGitPullImage = false
 	redeployGitStackName = ""
 
-	payload := buildRedeployPayloadFromFlags()
+	payload, err := buildRedeployPayloadFromFlags()
+	require.NoError(t, err)
 
 	// All fields should be empty/false when nothing is set
 	assert.Equal(t, "", payload.RepositoryReferenceName)
@@ -77,4 +81,75 @@ func TestBuildRedeployPayloadFromFlags_EmptyFields(t *testing.T) {
 	assert.Equal(t, "", payload.StackName)
 	assert.False(t, payload.Prune)
 	assert.False(t, payload.PullImage)
+}
+
+func TestBuildRedeployPayloadFromFlags_EnvWithSpaces(t *testing.T) {
+	redeployGitRepositoryReferenceName = ""
+	redeployGitRepositoryUsername = ""
+	redeployGitRepositoryPassword = ""
+	redeployGitEnv = []string{"GREETING=  hello world  "}
+	redeployGitPrune = false
+	redeployGitPullImage = false
+	redeployGitStackName = ""
+
+	payload, err := buildRedeployPayloadFromFlags()
+	require.NoError(t, err)
+	require.Len(t, payload.Env, 1)
+
+	assert.Equal(t, "GREETING", payload.Env[0].Name)
+	assert.Equal(t, "  hello world  ", payload.Env[0].Value)
+}
+
+func TestBuildRedeployPayloadFromFlags_InvalidEnv(t *testing.T) {
+	redeployGitRepositoryReferenceName = ""
+	redeployGitRepositoryUsername = ""
+	redeployGitRepositoryPassword = ""
+	redeployGitEnv = []string{"INVALID"}
+	redeployGitPrune = false
+	redeployGitPullImage = false
+	redeployGitStackName = ""
+
+	_, err := buildRedeployPayloadFromFlags()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "missing '='")
+}
+
+func TestBuildRedeployPayloadFromFlags_RepositoryCredentialsMustBeTogether(t *testing.T) {
+	redeployGitRepositoryReferenceName = ""
+	redeployGitRepositoryUsername = "user"
+	redeployGitRepositoryPassword = ""
+	redeployGitEnv = []string{}
+	redeployGitPrune = false
+	redeployGitPullImage = false
+	redeployGitStackName = ""
+
+	_, err := buildRedeployPayloadFromFlags()
+	require.Error(t, err)
+	assert.EqualError(t, err, "--repository-username and --repository-password must be provided together")
+}
+
+func TestHasNonInteractiveRedeployInput_FalseWhenNoFlags(t *testing.T) {
+	redeployGitEndpointID = 0
+	redeployGitRepositoryReferenceName = ""
+	redeployGitRepositoryUsername = ""
+	redeployGitRepositoryPassword = ""
+	redeployGitEnv = nil
+	redeployGitPrune = false
+	redeployGitPullImage = false
+	redeployGitStackName = ""
+
+	assert.False(t, hasNonInteractiveRedeployInput())
+}
+
+func TestHasNonInteractiveRedeployInput_TrueWhenFlagsProvided(t *testing.T) {
+	redeployGitEndpointID = 1
+	redeployGitRepositoryReferenceName = ""
+	redeployGitRepositoryUsername = ""
+	redeployGitRepositoryPassword = ""
+	redeployGitEnv = nil
+	redeployGitPrune = false
+	redeployGitPullImage = false
+	redeployGitStackName = ""
+
+	assert.True(t, hasNonInteractiveRedeployInput())
 }
