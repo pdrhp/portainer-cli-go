@@ -43,6 +43,24 @@ func TestParse_QuotedSingleValue(t *testing.T) {
 	assert.Equal(t, "hello world", vars[0].Value)
 }
 
+func TestParse_AllowsSingleQuotedAssignment(t *testing.T) {
+	vars, err := Parse("'DB_HOST=postgres'")
+
+	require.NoError(t, err)
+	require.Len(t, vars, 1)
+	assert.Equal(t, "DB_HOST", vars[0].Name)
+	assert.Equal(t, "postgres", vars[0].Value)
+}
+
+func TestParse_AllowsDoubleQuotedAssignment(t *testing.T) {
+	vars, err := Parse("\"DB_HOST=postgres\"")
+
+	require.NoError(t, err)
+	require.Len(t, vars, 1)
+	assert.Equal(t, "DB_HOST", vars[0].Name)
+	assert.Equal(t, "postgres", vars[0].Value)
+}
+
 func TestParse_EmptyValue(t *testing.T) {
 	vars, err := Parse("EMPTY=")
 

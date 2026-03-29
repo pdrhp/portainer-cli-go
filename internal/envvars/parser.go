@@ -24,17 +24,25 @@ func Parse(input string) ([]types.Pair, error) {
 			continue
 		}
 
-		equalsIndex := strings.Index(line, "=")
+		lineToParse := line
+		trimmedLine := strings.TrimSpace(line)
+		if len(trimmedLine) >= 2 {
+			if (trimmedLine[0] == '"' && trimmedLine[len(trimmedLine)-1] == '"') || (trimmedLine[0] == '\'' && trimmedLine[len(trimmedLine)-1] == '\'') {
+				lineToParse = trimmedLine[1 : len(trimmedLine)-1]
+			}
+		}
+
+		equalsIndex := strings.Index(lineToParse, "=")
 		if equalsIndex < 0 {
 			return nil, fmt.Errorf("invalid env var format at line %d: missing '='", lineNumber+1)
 		}
 
-		key := strings.TrimSpace(line[:equalsIndex])
+		key := strings.TrimSpace(lineToParse[:equalsIndex])
 		if !variableKeyPattern.MatchString(key) {
 			return nil, fmt.Errorf("invalid env var key at line %d: %q", lineNumber+1, key)
 		}
 
-		value := line[equalsIndex+1:]
+		value := lineToParse[equalsIndex+1:]
 		if len(value) >= 2 {
 			if (value[0] == '"' && value[len(value)-1] == '"') || (value[0] == '\'' && value[len(value)-1] == '\'') {
 				value = value[1 : len(value)-1]
