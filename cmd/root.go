@@ -29,6 +29,7 @@ func init() {
 	viper.SetEnvPrefix("PORTAINER")
 
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(newConfigsCommand())
 	rootCmd.AddCommand(authCmd)
 	rootCmd.AddCommand(stacksCmd)
 }

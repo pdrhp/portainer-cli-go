@@ -21,6 +21,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Validate
+        run: |
+          go test -race ./...
+          go vet ./...
+          go build ./...
+
       - name: Calculate version
         id: version
         run: |

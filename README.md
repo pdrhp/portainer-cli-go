@@ -139,3 +139,6 @@ STACKS_JSON=$(./portainer-cli stacks list --output json)
   --env VERSION=v1.2.3 \
   --env ENVIRONMENT=production
 ```
+### Docker Swarm configs
+
+Create configs from files or stdin with `portainer-go configs create NAME --endpoint-id ID --file PATH`. See [command documentation](docs/commands/configs.md).
